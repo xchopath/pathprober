@@ -1,0 +1,6 @@
+requests
+argparse
+re
+urllib3
+json
+validators

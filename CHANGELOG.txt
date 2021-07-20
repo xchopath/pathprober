@@ -1,0 +1,19 @@
+### pathprober 0.2+dev ###
+
+Fix:
+- Word matching
+- Error handler
+- Remove double request
+- Misc output file
+
+Add:
+- Timestamp if word is found
+
+
+### pathprober 0.3+dev ###
+
+Fix:
+- URL parser
+
+Add:
+- URL validators
