@@ -34,6 +34,7 @@ pip3 install -r requirements.txt
 - Multiple paths (in a file separated by newline) or single path
 - 1 word or 2 words (filter)
 - Save valid results to another file
+- Multi-threading
 
 
 ## Sample usage

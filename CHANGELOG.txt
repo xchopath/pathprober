@@ -1,19 +1,20 @@
-### pathprober 0.2+dev ###
-
-Fix:
+------- pathprober 0.2+dev -------
+Fixed:
 - Word matching
 - Error handler
 - Remove double request
 - Misc output file
-
-Add:
+Added:
 - Timestamp if word is found
 
-
-### pathprober 0.3+dev ###
-
-Fix:
+------- pathprober 0.3+dev -------
+Fixed:
 - URL parser
-
-Add:
+Added:
 - URL validators
+
+------- pathprober 0.4+dev -------
+Added:
+- Multi-threading
+Changed:
+- Output format

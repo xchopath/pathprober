@@ -11,6 +11,7 @@ import urllib3
 import sys
 from urllib.parse import urlparse
 import validators
+import threading
 
 urllib3.disable_warnings()
 
@@ -58,7 +59,7 @@ def CheckIfMatch(full_response, target_full, word, word2):
 			result = {'status': 'not_found', 'target_full': target_full, 'filter': None}
 		return result
 	except Exception as error:
-		print('ERROR: on line {}'.format(sys.exc_info()[-1].tb_lineno), type(error).__name__, error)
+		return None
 
 def ParsedTarget(target, pathname):
 	try:
@@ -72,12 +73,12 @@ def ParsedTarget(target, pathname):
 		target_full = re.sub(':/', '://', target_full)
 		return '{}'.format(str(target_full))
 	except Exception as error:
-		print('ERROR: on line {}'.format(sys.exc_info()[-1].tb_lineno), type(error).__name__, error)
+		return None
 
 def GetFullResponse(target_full):
 	try:
 		if validators.url(target_full):
-			response = requests.get(target_full, verify=False, allow_redirects=True)
+			response = requests.get(target_full, verify=False, allow_redirects=True, timeout=10)
 			full_response = []
 			for header in response.headers:
 				full_response.append(str(header) + ': ' + str(response.headers[header]))
@@ -87,7 +88,7 @@ def GetFullResponse(target_full):
 		else:
 			return ''
 	except Exception as error:
-		print('ERROR: on line {}'.format(sys.exc_info()[-1].tb_lineno), type(error).__name__, error)
+		print('ERR: ({}) {}'.format(type(error).__name__, target_full))
 
 def SaveToFile(output, file_output):
 	try:
@@ -96,31 +97,45 @@ def SaveToFile(output, file_output):
 			open_filename.write(output + '\n')
 			open_filename.close()
 	except Exception as error:
-		print('ERROR: on line {}'.format(sys.exc_info()[-1].tb_lineno), type(error).__name__, error)
+		print('ERR: ({}) {}'.format(type(error).__name__, target_full))
+
+def Workers(target, pathname, word, word2):
+	try:
+		target_full = ParsedTarget(target, pathname)
+		full_response = GetFullResponse(target_full)
+		result = CheckIfMatch(full_response, target_full, word, word2)
+		if result['status'] == 'found':
+			print("FOUND! {} (filter: {})".format(result['target_full'], result['filter']))
+			SaveToFile(result['target_full'] + ' ({})'.format(result['filter']), file_output)
+		else:
+			print("INFO: {} not found".format(result['target_full']))
+	except Exception as error:
+		return None
 
 ### ARGS VALIDATOR
+now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 if not target == None and not multi_target_file == None:
-	print("ERROR: -t and -T cannot be used in the same time")
+	print("ERR: -t and -T cannot be used in the same time")
 	exit()
 elif not pathname == None and not multi_pathname_file == None:
-	print("ERROR: -p and -P cannot be used in the same time")
+	print("ERR: -p and -P cannot be used in the same time")
 	exit()
 elif target == None and multi_target_file == None:
-	print("ERROR: Please add target")
+	print("ERR: Please add target")
 	print("HINT: Use parameter -t or -T")
 	exit()
 elif pathname == None and multi_pathname_file == None:
-	print("ERROR: Please add target")
+	print("ERR: Please add target")
 	print("HINT: Use parameter -p or -P")
 	exit()
 elif not multi_target_file == None and not os.path.isfile(multi_target_file):
-	print("ERROR: Could not find multi-target file")
+	print("ERR: Could not find multi-target file")
 	exit()
 elif not multi_pathname_file == None and not os.path.isfile(multi_pathname_file):
-	print("ERROR: Could not find multi-pathname file")
+	print("ERR: Could not find multi-pathname file")
 	exit()
 elif word == None:
-	print("ERROR: Please add specific word")
+	print("ERR: Please add specific word")
 	print("HINT: Use parameter -w")
 	exit()
 
@@ -134,23 +149,14 @@ elif not word == None:
 if not multi_target_file == None and not pathname == None:
 	try:
 		open_multi_target_file = open(multi_target_file, "r")
-		for target_row in open_multi_target_file:
-			target = target_row.split()[0]
-			try:
-				target_full = ParsedTarget(target, pathname)
-				full_response = GetFullResponse(target_full)
-				result = CheckIfMatch(full_response, target_full, word, word2)
-				if result['status'] == 'found':
-					now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-					print("FOUND! at {} - {} (filter: {})".format(now, result['target_full'], result['filter']))
-					SaveToFile(result['target_full'] + ' ({})'.format(result['filter']), file_output)
-				else:
-					print("INFO: {} not found".format(result['target_full']))
-			except Exception as error:
-				print('ERROR: on line {}'.format(sys.exc_info()[-1].tb_lineno), type(error).__name__, error)
+		workers = [threading.Thread(target=Workers, args=(target_row.split()[0], pathname, word, word2,)) for target_row in open_multi_target_file]
+		for thread in workers:
+		    thread.start()
+		for thread in workers:
+		    thread.join()
 		open_multi_target_file.close()
 	except Exception as error:
-		print('ERROR: on line {}'.format(sys.exc_info()[-1].tb_lineno), type(error).__name__, error)
+		print('ERR: {} on line {}'.format(type(error).__name__, sys.exc_info()[-1].tb_lineno))
 
 ### MULTIPLE TARGET AND MULTIPLE PATHNAME
 elif not multi_target_file == None and not multi_pathname_file == None:
@@ -159,58 +165,32 @@ elif not multi_target_file == None and not multi_pathname_file == None:
 		for target_row in open_multi_target_file:
 			target = target_row.split()[0]
 			open_multi_pathname_file = open(multi_pathname_file, "r")
-			for pathname_row in open_multi_pathname_file:
-				pathname = pathname_row.split()[0]
-				try:
-					target_full = ParsedTarget(target, pathname)
-					full_response = GetFullResponse(target_full)
-					result = CheckIfMatch(full_response, target_full, word, word2)
-					if result['status'] == 'found':
-						now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-						print("FOUND! at {} - {} (filter: {})".format(now, result['target_full'], result['filter']))
-						SaveToFile(result['target_full'] + ' ({})'.format(result['filter']), file_output)
-					else:
-						print("INFO: {} not found".format(result['target_full']))
-				except Exception as error:
-					print('ERROR: on line {}'.format(sys.exc_info()[-1].tb_lineno), type(error).__name__, error)
+			workers = [threading.Thread(target=Workers, args=(target, pathname_row.split()[0], word, word2,)) for pathname_row in open_multi_pathname_file]
+			for thread in workers:
+			    thread.start()
+			for thread in workers:
+			    thread.join()
 			open_multi_pathname_file.close()
 		open_multi_target_file.close()
 	except Exception as error:
-		print('ERROR: on line {}'.format(sys.exc_info()[-1].tb_lineno), type(error).__name__, error)
+		print('ERR: {} on line {}'.format(type(error).__name__, sys.exc_info()[-1].tb_lineno))
 
 ### SINGLE TARGET AND SINGLE PATHNAME
 elif not target == None and not pathname == None:
 	try:
-		target_full = ParsedTarget(target, pathname)
-		full_response = GetFullResponse(target_full)
-		result = CheckIfMatch(full_response, target_full, word, word2)
-		if result['status'] == 'found':
-			now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-			print("FOUND! at {} - {} (filter: {})".format(now, result['target_full'], result['filter']))
-			SaveToFile(result['target_full'] + ' ({})'.format(result['filter']), file_output)
-		else:
-			print("INFO: {} not found".format(result['target_full']))
+		Workers(target, pathname, word, word2)
 	except Exception as error:
-		print('ERROR: on line {}'.format(sys.exc_info()[-1].tb_lineno), type(error).__name__, error)
+		print('ERR: {} on line {}'.format(type(error).__name__, sys.exc_info()[-1].tb_lineno))
 
 ### SINGLE TARGET AND MULTIPLE PATHNAME
 elif not target == None and not multi_pathname_file == None:
 	try:
 		open_multi_pathname_file = open(multi_pathname_file, "r")
-		for pathname_row in open_multi_pathname_file:
-			pathname = pathname_row.split()[0]
-			try:
-				target_full = ParsedTarget(target, pathname)
-				full_response = GetFullResponse(target_full)
-				result = CheckIfMatch(full_response, target_full, word, word2)
-				if result['status'] == 'found':
-					now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-					print("FOUND! at {} - {} (filter: {})".format(now, result['target_full'], result['filter']))
-					SaveToFile(result['target_full'] + ' ({})'.format(result['filter']), file_output)
-				else:
-					print("INFO: {} not found".format(result['target_full']))
-			except Exception as error:
-				print('ERROR: on line {}'.format(sys.exc_info()[-1].tb_lineno), type(error).__name__, error)
+		workers = [threading.Thread(target=Workers, args=(target, pathname_row.split()[0], word, word2,)) for pathname_row in open_multi_pathname_file]
+		for thread in workers:
+		    thread.start()
+		for thread in workers:
+		    thread.join()
 		open_multi_pathname_file.close()
 	except Exception as error:
-		print('ERROR: on line {}'.format(sys.exc_info()[-1].tb_lineno), type(error).__name__, error)
+		print('ERR: {} on line {}'.format(type(error).__name__, sys.exc_info()[-1].tb_lineno))
