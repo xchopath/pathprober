@@ -1,7 +1,7 @@
 # pathprober
 Probe and discover HTTP pathname using brute-force methodology and filtered by specific word or 2 words at once.
 
-![version](https://img.shields.io/badge/version-0.3+dev-blue)
+![version](https://img.shields.io/badge/version-0.4+dev-blue)
 [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/)
 
 
