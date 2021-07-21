@@ -1,3 +1,15 @@
+------- pathprober 0.4+dev -------
+Added:
+- Multi-threading
+Changed:
+- Output format
+
+------- pathprober 0.3+dev -------
+Fixed:
+- URL parser
+Added:
+- URL validators
+
 ------- pathprober 0.2+dev -------
 Fixed:
 - Word matching
@@ -6,15 +18,3 @@ Fixed:
 - Misc output file
 Added:
 - Timestamp if word is found
-
-------- pathprober 0.3+dev -------
-Fixed:
-- URL parser
-Added:
-- URL validators
-
-------- pathprober 0.4+dev -------
-Added:
-- Multi-threading
-Changed:
-- Output format
