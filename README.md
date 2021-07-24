@@ -5,7 +5,7 @@ Probe and discover HTTP pathname using brute-force methodology and filtered by s
 [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/)
 
 
-![pathprober-sample](https://raw.githubusercontent.com/xchopath/pathprober/master/sample.jpg)
+![pathprober-sample](https://raw.githubusercontent.com/xchopath/pathprober/master/sample.png)
 
 #### Purpose
 Brute-forcing website directories or HTTP pathname and validate using HTTP response code is not relevant anymore. This tool will help you to perform a penetration test, because it could validate the directories using specific-word or 2 words at once and the results will more accurate.
