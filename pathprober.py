@@ -78,7 +78,8 @@ def ParsedTarget(target, pathname):
 def GetFullResponse(target_full):
 	try:
 		if validators.url(target_full):
-			response = requests.get(target_full, verify=False, allow_redirects=True, timeout=10)
+			headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/12.246'}
+			response = requests.get(target_full, headers=headers, verify=False, allow_redirects=True, timeout=10)
 			full_response = []
 			for header in response.headers:
 				full_response.append(str(header) + ': ' + str(response.headers[header]))
