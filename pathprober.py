@@ -68,7 +68,7 @@ def ParsedTarget(target, pathname):
 		else:
 			target = target
 		url_parse = urlparse(target)
-		target = url_parse.scheme + '://' + url_parse.netloc
+		target = url_parse.scheme + '://' + url_parse.netloc + '/' + url_parse.path
 		target_full = re.sub('/+', '/', target + '/' + pathname)
 		target_full = re.sub(':/', '://', target_full)
 		return '{}'.format(str(target_full))
