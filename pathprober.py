@@ -75,21 +75,29 @@ def ParsedTarget(target, pathname):
 	except Exception as error:
 		return None
 
-def GetFullResponse(target_full):
+def HeaderBodyMerger(headers, body):
 	try:
-		if validators.url(target_full):
-			headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/12.246'}
-			response = requests.get(target_full, headers=headers, verify=False, allow_redirects=True, timeout=10)
-			full_response = []
-			for header in response.headers:
-				full_response.append(str(header) + ': ' + str(response.headers[header]))
-			full_response = '\n'.join([stings for stings in full_response])
-			full_response = full_response + '\n\n' + response.text
-			return '{}'.format(str(full_response))
-		else:
-			return ''
-	except Exception as error:
-		print('ERR: ({}) {}'.format(type(error).__name__, target_full))
+		full_response = []
+		for header in headers:
+			full_response.append(str(header) + ': ' + str(headers[header]))
+		full_response = '\n'.join([stings for stings in full_response])
+		full_response = full_response + '\n\n' + body 
+		return '{}'.format(str(full_response))
+	except:
+		return None
+
+def GetFullResponse(url):
+	try:
+		req = requests.get('{}'.format(url), allow_redirects=True, verify=False, timeout=10)
+		merge_response = []
+		for redirect_response in req.history:
+			get_redirect_response = HeaderBodyMerger(redirect_response.headers, redirect_response.text)
+			merge_response.append(get_redirect_response)
+		merge_response.append(HeaderBodyMerger(req.headers, req.text))
+		merged_response = ''.join([stings for stings in merge_response])
+		return '{}'.format(str(merged_response))
+	except:
+		return None
 
 def SaveToFile(output, file_output):
 	try:
